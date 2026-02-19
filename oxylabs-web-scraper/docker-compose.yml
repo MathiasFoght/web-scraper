@@ -1,0 +1,41 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oxylabs_app
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-oxylabs}
+      POSTGRES_USER: ${POSTGRES_USER:-oxylabs}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oxylabs_password}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: oxylabs_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-oxylabs}
+      POSTGRES_USER: ${POSTGRES_USER:-oxylabs}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oxylabs_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oxylabs} -d ${POSTGRES_DB:-oxylabs}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

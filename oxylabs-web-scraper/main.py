@@ -1,16 +1,29 @@
-# This is a sample Python script.
+import streamlit as st
+from src.oxylabs_client import scrape_product_details
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+def render_header():
+    st.title("Web Scraper")
+    st.caption("Enter your ASIN to get product insights.")
 
+def render_inputs():
+    asin = st.text_input("ASIN", placeholder="e.g., B08N5WRWNW")
+    geo = st.text_input("ZIP/Postal Code", placeholder="e.g., US")
+    domain = st.selectbox("Domain", [
+        "com", "ca", "co.uk", "de", "fr", "it", "ae"
+    ])
+    return asin.strip(), geo.strip(), domain
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+def main():
+    st.set_page_config(page_title="Web Scraper", page_icon=":robot:")
+    render_header()
+    asin, geo, domain = render_inputs()
 
+    if st.button("Scrape product") and asin:
+        with st.spinner("Scraping product..."):
+            st.write(f"Scrape")
+            product = scrape_product_details(asin, geo, domain)
+            st.success("Product scraped successfully!")
+            st.write(product)
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    main()
