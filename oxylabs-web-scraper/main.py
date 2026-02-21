@@ -1,6 +1,7 @@
 import streamlit as st
 from src.services import scrape_and_store_product, fetch_and_store_competitors
 from src.db import Database
+from src.LLM import analyze_competitors
 
 def render_header():
     st.title("Web Scraper")
@@ -106,8 +107,9 @@ def main():
         with col1:
             if st.button("Analyze competitors with AI", type="primary"):
                 with st.spinner("Analyzing..."):
-                    st.text("Analysis")
-
+                    # Run AI to analyze competitor
+                    analysis = analyze_competitors(selected_asin)
+                    st.markdown(analysis)
 
 
 

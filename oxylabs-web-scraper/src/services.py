@@ -55,7 +55,7 @@ def fetch_and_store_competitors(parent_asin, domain, geo_location, pages=2):
         db.insert_product(competitor)
         stored_competitors.append(competitor)
 
-    st.write(f" Competitor summery")
+    st.write(f" Competitor summary")
     for competitor in stored_competitors:
         price = competitor.get("price")
         curreny = competitor.get("currency", "--")
