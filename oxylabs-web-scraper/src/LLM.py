@@ -71,24 +71,19 @@ def analyze_competitors(asin):
     llm_setup = ChatOpenAI(model="gpt-4", temperature=0, max_tokens=1000, max_retries=3) #Temp. is set to 0 to ensure more deterministic output.
     # Chain for the analysis
     chain = prompt | llm_setup | parser
-    try:
-        result = chain.invoke(
-            {
-                "product_title": product["title"] if product else asin,
-                "brand": product.get("brand") if product else None,
-                "price": product.get("price") if product else None,
-                "currency": product.get("currency") if product else "",
-                "rating": product.get("rating") if product else None,
-                "categories": product.get("categories") if product else None,
-                "amazon_domain": product.get("amazon_domain") if product else "com",
-                "competitors": competitors,
-            }
-        )
-    except OutputParserException as e:
-        print("RAW LLM OUTPUT:")
-        print(getattr(e, "llm_output", str(e)))
-        raise
-
+    result = chain.invoke(
+        {
+            "product_title": product["title"] if product else asin,
+            "brand": product.get("brand") if product else None,
+            "price": product.get("price") if product else None,
+            "currency": product.get("currency") if product else "",
+            "rating": product.get("rating") if product else None,
+            "categories": product.get("categories") if product else None,
+            "amazon_domain": product.get("amazon_domain") if product else "com",
+            "competitors": competitors,
+        }
+    )
+    
     lines = [
         "Summary:\n" + result.summary,
         "\nPositioning:\n" + result.positioning,
