@@ -9,9 +9,7 @@ load_dotenv()
 
 
 class Database:
-    def __init__(self, db_path="data.json"):
-        # Keep db_path argument for backward compatibility with previous TinyDB API.
-        self.db_path = db_path
+    def __init__(self):
         self.host = os.getenv("POSTGRES_HOST")
         self.port = int(os.getenv("POSTGRES_PORT"))
         self.name = os.getenv("POSTGRES_DB")
@@ -73,6 +71,7 @@ class Database:
                 """,
                 (asin, created_at, Json(product_data)),
             )
+            print(f"Product {asin} saved in database successfully.")
             conn.commit()
         return asin
 
@@ -81,6 +80,7 @@ class Database:
         with self._connection() as conn, conn.cursor() as cur:
             cur.execute("SELECT data FROM products WHERE asin = %s LIMIT 1;", (asin,))
             row = cur.fetchone()
+            print(f"Product {asin} fetched from database successfully.")
         return row["data"] if row else None
 
     # Func. to get all products
@@ -93,7 +93,10 @@ class Database:
                 ORDER BY created_at DESC;
                 """
             )
+            print("All products fetched from database successfully.")
             rows = cur.fetchall()
+            for row in rows:
+                print(f"Products fetched:", row["data"])
         return [row["data"] for row in rows]
 
     # Func. to search products
