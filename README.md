@@ -7,7 +7,6 @@
   - Scrape a product by ASIN
   - Store product snapshots in PostgreSQL
   - Discover and scrape competitor products
-  - Live competitor scraping progress
   - AI analysis of positioning and recommendations (OpenAI via LangChain)
 
   ## Tech Stack
