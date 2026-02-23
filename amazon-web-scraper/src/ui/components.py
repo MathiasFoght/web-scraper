@@ -1,0 +1,103 @@
+import streamlit as st
+
+
+def render_hero():
+    st.markdown(
+        """
+        <div class="hero">
+          <h2 style="margin:0;">Amazon Product Intelligence</h2>
+          <p>Scrape products from, identify competitors, and generate AI-driven competitor insights.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_inputs():
+    c1, c2, c3 = st.columns([2, 2, 1.2])
+    asin = c1.text_input("ASIN", placeholder="e.g., B08N5WRWNW")
+    geo = c2.text_input("ZIP/Postal Code", placeholder="e.g., US")
+    domain = c3.selectbox("Domain", ["com", "ca", "co.uk", "de", "fr", "it", "ae"])
+    st.markdown("</div>", unsafe_allow_html=True)
+    return asin.strip(), geo.strip(), domain
+
+
+def _format_price(product):
+    price = product.get("price", "--")
+    currency = product.get("currency", "")
+    if isinstance(price, (int, float)):
+        return f"{currency}{price:,.2f}" if currency else f"{price:,.2f}"
+    return str(price)
+
+
+def render_product_card(product):
+    with st.container(border=True):
+        col_image, col_content = st.columns([1, 2.2])
+
+        images = product.get("images", [])
+        if images:
+            col_image.image(images[0], width=150)
+        else:
+            col_image.caption("No image available")
+
+        with col_content:
+            title = product.get("title") or product.get("asin")
+            st.markdown(f"### {title}")
+
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Price", _format_price(product))
+            m2.metric("Brand", product.get("brand", "--"))
+            m3.metric("Rating", product.get("rating", "--"))
+
+            domain_info = f"amazon.{product.get('amazon_domain', 'com')}"
+            geo_info = product.get("geo_location", "--")
+            st.markdown(
+                f'<p class="subtle">Domain: {domain_info} | Geo Location: {geo_info}</p>',
+                unsafe_allow_html=True,
+            )
+
+            url = product.get("url")
+            if url:
+                st.markdown(f"[See product]({url})")
+
+            if st.button("Analyze competitors", key=f"analyze_{product['asin']}"):
+                st.session_state["analyzing_asin"] = product["asin"]
+
+
+def render_products_section(products):
+    if not products:
+        return
+
+    st.markdown("## Scraped Products")
+
+    items_per_page = 8
+    total_pages = (len(products) + items_per_page - 1) // items_per_page
+
+    left, center, right = st.columns([2, 1.5, 2])
+    with center:
+        page = st.number_input("Page", min_value=1, max_value=total_pages, value=1) - 1
+
+    start_index = page * items_per_page
+    end_index = min(start_index + items_per_page, len(products))
+    st.caption(f"Showing {start_index + 1}-{end_index} of {len(products)} products")
+
+    for product in products[start_index:end_index]:
+        render_product_card(product)
+
+
+def render_competitor_summary(competitors):
+    if not competitors:
+        st.caption("No competitors to show.")
+        return
+
+    st.markdown("### Competitor Snapshot")
+    for competitor in competitors:
+        price = competitor.get("price")
+        currency = competitor.get("currency", "")
+        if isinstance(price, (int, float)):
+            price_str = f"{currency} {price:,.2f}" if currency else f"{price:,.2f}"
+        else:
+            price_str = str(price) if price is not None else "--"
+
+        title = competitor.get("title", competitor.get("asin", "Unknown"))
+        st.markdown(f"- **{title}**  \n  Price: `{price_str}`")

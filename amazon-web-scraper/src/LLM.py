@@ -1,7 +1,5 @@
-import os
 from dotenv import load_dotenv
-from langchain_core.exceptions import OutputParserException
-
+from .repositories.product_repository import ProductRepository
 from .db import Database
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -11,6 +9,10 @@ from langchain_core.output_parsers import PydanticOutputParser
 
 load_dotenv()
 
+db = Database()
+repo = ProductRepository(db)
+
+# Data model for the competitor analysis
 class CompetitorAnalysis(BaseModel):
      asin: str
      title: Optional[str]
@@ -19,14 +21,15 @@ class CompetitorAnalysis(BaseModel):
      rating: Optional[float]
      key_points: List[str] = Field(default_factory=list)
 
+# Data model for the LLM output
 class AnalysisResponse(BaseModel):
     summary: str
     positioning: str
     top_competitors: List[CompetitorAnalysis]
     recommendations: List[str]
 
-def format_competitors(db: Database, parent_asin):
-    competitors = db.search_products({"parent_asin": parent_asin})
+def format_competitors(parent_asin):
+    competitors = repo.search_products({"parent_asin": parent_asin})
     return [
         {
             "asin": c["asin"],
@@ -41,9 +44,9 @@ def format_competitors(db: Database, parent_asin):
     ]
 
 def analyze_competitors(asin):
-    db = Database()
-    product = db.get_product(asin)
-    competitors = format_competitors(db, asin)
+    print('Analyzing competitors for: ', asin, '\n\n')
+    product = repo.get_product(asin)
+    competitors = format_competitors(asin)
 
     parser = PydanticOutputParser(pydantic_object=AnalysisResponse)
 

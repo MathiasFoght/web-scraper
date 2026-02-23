@@ -1,5 +1,5 @@
 [project]
-name = "oxylabs-web-scraper"
+name = "amazon-web-scraper"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"

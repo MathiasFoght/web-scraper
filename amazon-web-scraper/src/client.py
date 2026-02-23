@@ -1,9 +1,7 @@
 import os
 import time
-
 from dotenv import load_dotenv
 import requests
-import streamlit as st
 
 load_dotenv()
 
@@ -25,6 +23,7 @@ def extract_content(payload):
 
 # Func. to post query to OxyLabs
 def post_query(payload):
+    print('Posting query to OxyLabs: ', payload)
     username = os.getenv("OXYLABS_USERNAME")
     password = os.getenv("OXYLABS_PASSWORD")
 
@@ -57,6 +56,7 @@ def normalize_product(content):
     }
 
 def scrape_product_details(asin, geo_location, domain):
+    print('Scraping product: ', asin)
     payload = {
         "source": "amazon_product",
         "query": asin,
@@ -115,8 +115,7 @@ def normalize_search_result(item):
         "rating": item.get("rating")
     }
 def search_competitors(query_title, domain, categories, pages=1, geo_location=""):
-    st.write("Searching for competitors...")
-
+    print('Searching competitors')
     search_title = clean_product_name(query_title)
     results = []
     seen_asins = set()
@@ -149,34 +148,23 @@ def search_competitors(query_title, domain, categories, pages=1, geo_location=""
 
         time.sleep(0.1)
 
-    st.write(f"Found {len(results)} competitors")
     return results
 
-def scrape_multiple_products(asins, geo_location, domain):
-    st.write("Scraping multiple products...")
+def scrape_multiple_products(asins, geo_location, domain, progress_callback=None):
+    print('Scraping products')
     products = []
-
-    progress_text = st.empty()
-    progress_bar = st.progress(0)
     total = len(asins)
+    scraped_count = 0
 
-    for index, a in enumerate(asins, 1):
+    for index, a in enumerate(asins, start=1):
         try:
-            progress_text.write(f"Processing competitor {index}/{total}: {a}")
-            progress_bar.progress(index / total)
-
             product = scrape_product_details(a, geo_location, domain)
             products.append(product)
-            progress_text.write(f"Found: {product.get('title', a)}")
-        except Exception as e:
-            progress_text.write(f"Failed to scrape {a}")
-            continue
+            scraped_count += 1
+        except Exception:
+            pass
 
-    progress_text.empty()
-    progress_bar.empty()
+        if progress_callback:
+            progress_callback(index, total, scraped_count, a)
 
-    st.write(f"Successfully scraped {len(products)} out of {total} competitors")
     return products
-
-
-

@@ -1,23 +1,27 @@
-import streamlit as st
 from .db import Database
-from .oxylabs_client import scrape_product_details, search_competitors, scrape_multiple_products
+from .client import scrape_product_details, search_competitors, scrape_multiple_products
+from .repositories.product_repository import ProductRepository
 
+db = Database()
+repo = ProductRepository(db)
+
+# Func. to scrape product details and store
 def scrape_and_store_product(asin, geo_location, domain):
+    print('Scraping product: ', asin)
     data = scrape_product_details(asin, geo_location, domain)
-    db = Database()
-    db.insert_product(data)
+    repo.insert_product(data)
     return data
 
 
-def fetch_and_store_competitors(parent_asin, domain, geo_location, pages=2):
-    db = Database()
-    parent = db.get_product(parent_asin)
+# Func. to fetch competitors and store
+def fetch_and_store_competitors(parent_asin, domain, geo_location, pages=2, progress_callback=None):
+    print('Fetching competitors for: ', parent_asin)
+    parent = repo.get_product(parent_asin)
     if not parent:
         return []
 
     search_domain = parent.get("amazon_domain", domain)
     search_geo = parent.get("geo_location", geo_location)
-    st.write(f"Using domain: {search_domain}")
 
     search_categories = []
     if parent.get("categories"):
@@ -47,25 +51,17 @@ def fetch_and_store_competitors(parent_asin, domain, geo_location, pages=2):
         if r.get("asin") and r.get("asin") != parent_asin and r.get("title")
     ))
 
-    parent_details = scrape_multiple_products(competitors_asins[:20], geo_location, domain) # set a max of 20 competitors to be scraped per product
+    parent_details = scrape_multiple_products(
+        competitors_asins[:20], # Set a max of 20 competitors to be scraped per product
+        geo_location,
+        domain,
+        progress_callback=progress_callback,
+    )
 
     stored_competitors = []
     for competitor in parent_details:
         competitor["parent_asin"] = parent_asin
-        db.insert_product(competitor)
+        repo.insert_product(competitor)
         stored_competitors.append(competitor)
 
-    st.write(f" Competitor summary")
-    for competitor in stored_competitors:
-        price = competitor.get("price")
-        curreny = competitor.get("currency", "--")
-        if isinstance(price, (int, float)):
-            price_str = f"{curreny} {price:,.2f}" if curreny else f"{price:,.2f}"
-        else:
-            price_str = str(price)
-
-        st.write(f"- {competitor.get('title')} - {price_str}")
-    st.write("---")
-
     return stored_competitors
-

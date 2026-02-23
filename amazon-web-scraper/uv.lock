@@ -701,7 +701,7 @@ wheels = [
 ]
 
 [[package]]
-name = "oxylabs-web-scraper"
+name = "amazon-web-scraper"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
