@@ -8,6 +8,8 @@
   - Store product snapshots in PostgreSQL
   - Discover and scrape competitor products
   - AI analysis of positioning and recommendations (OpenAI via LangChain)
+  - Price history tracking and trend (7/30/90 days)
+  - Export to CSV/XLSX
 
   ## Tech Stack
 
