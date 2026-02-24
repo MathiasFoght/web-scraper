@@ -224,11 +224,11 @@ def _render_price_history_card(product, repo):
         first_price = points[0]["price"]
         delta = latest_price - first_price
         if delta > 0:
-            trend = "Stigende"
+            trend = "Increasing"
         elif delta < 0:
-            trend = "Faldende"
+            trend = "Decreasing"
         else:
-            trend = "Uændret"
+            trend = "Unchanged"
 
         st.metric(
             f"Trend ({days}d)",
