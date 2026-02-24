@@ -38,7 +38,22 @@
   - POSTGRES_PORT
   - POSTGRES_DB
   - POSTGRES_USER
-  - POSTGRES_PASSWORD
+- POSTGRES_PASSWORD
+
+## Installation
+    
+  Clone repository:
+    
+  ```bash
+  git clone https://github.com/MathiasFoght/web-scraper.git
+  cd web-scraper/amazon-web-scraper
+  ```
+    
+  Install dependencies:
+    
+  ```bash
+  uv sync
+  ```
 
   ## Run with Docker
 
@@ -77,3 +92,7 @@
   3. App can discover competitors based on the parent product.
   4. Competitors are scraped with progress updates in UI.
   5. AI model analyzes parent + competitors and returns summary/recommendations.
+
+## Demo Video
+
+[Watch demo](docs/demo.mp4)
