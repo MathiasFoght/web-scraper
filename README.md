@@ -95,4 +95,4 @@
 
 ## Demo Video
 
-[Watch demo](docs/demo.mp4)
+[Watch demo](amazon-web-scraper/docs/demo.mp4)
