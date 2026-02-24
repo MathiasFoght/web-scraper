@@ -29,7 +29,6 @@ def apply_styles():
 
           .hero {
             color: #ffffff;
-            padding: 1.2rem 1.4rem;
             border-radius: 14px;
             box-shadow: var(--card-shadow);
             margin-bottom: 1rem;

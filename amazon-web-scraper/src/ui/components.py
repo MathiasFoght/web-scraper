@@ -73,7 +73,7 @@ def _build_export_file(products, export_format):
 
 @st.dialog("Export products")
 def _render_export_dialog(page_products, all_products, page, today):
-    export_format = st.selectbox("Format", ["XLSX", "CSV"], index=0, key="export_format")
+    export_format = st.selectbox("Format", ["XLSX", "CSV"], index=1, key="export_format")
     export_scope = st.selectbox(
         "Scope",
         ["Current page", "All products"],
@@ -108,11 +108,11 @@ def render_hero():
 
 
 def render_inputs():
-    c1, c2, c3 = st.columns([2, 2, 1.2])
-    asin = c1.text_input("ASIN", placeholder="e.g., B08N5WRWNW")
-    geo = c2.text_input("ZIP/Postal Code", placeholder="e.g., EU")
-    domain = c3.selectbox("Domain", ["com", "ca", "co.uk", "de", "fr", "it", "ae"])
-    st.markdown("</div>", unsafe_allow_html=True)
+    input_col, _ = st.columns([1, 2.2])
+    with input_col:
+        asin = st.text_input("ASIN", placeholder="e.g., B08N5WRWNW")
+        geo = st.text_input("ZIP/Postal Code", placeholder="e.g., EU")
+        domain = st.selectbox("Domain", ["com", "ca", "co.uk", "de", "fr", "it", "ae"])
     return asin.strip(), geo.strip(), domain
 
 
@@ -282,8 +282,8 @@ def render_products_section(products, repo):
     items_per_page = 8
     total_pages = (len(products) + items_per_page - 1) // items_per_page
 
-    left, center, right = st.columns([2, 1.5, 2])
-    with center:
+    pagination_col, _ = st.columns([0.6, 10.4])
+    with pagination_col:
         page = st.number_input("Page", min_value=1, max_value=total_pages, value=1) - 1
 
     start_index = page * items_per_page

@@ -41,7 +41,7 @@ def _fetch_competitors_with_progress(selected_asin, domain, geo):
 
 def initialize():
     print('Running app...')
-    st.set_page_config(page_title="Web Scraper", page_icon=":robot:", layout="wide")
+    st.set_page_config(page_title="Web Scraper", layout="wide")
     apply_styles()
     render_hero()
 
