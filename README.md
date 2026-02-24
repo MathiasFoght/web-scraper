@@ -95,4 +95,4 @@
 
 ## Demo Video
 
-[Watch demo](amazon-web-scraper/docs/demo.mp4)
+[Download here](https://github.com/MathiasFoght/web-scraper/raw/main/amazon-web-scraper/docs/demo.mp4)
