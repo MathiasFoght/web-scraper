@@ -100,7 +100,7 @@ def render_hero():
         """
         <div class="hero">
           <h2 style="margin:0;">Amazon Product Intelligence</h2>
-          <p>Scrape products from, identify competitors, and generate AI-driven competitor insights.</p>
+          <p>Scrape products, identify competitors, and generate AI-driven competitor insights.</p>
         </div>
         """,
         unsafe_allow_html=True,
