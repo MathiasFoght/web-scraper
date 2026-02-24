@@ -1,4 +1,97 @@
+import csv
+import io
+from datetime import date
+
 import streamlit as st
+from openpyxl import Workbook
+
+CSV_COLUMNS = [
+    "asin",
+    "title",
+    "brand",
+    "price",
+    "currency",
+    "rating",
+    "amazon_domain",
+    "geo_location",
+    "url",
+    "created_at",
+]
+
+
+def _csv_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    return str(value)
+
+
+def _csv_rows(products):
+    rows = []
+    for product in products:
+        row = {}
+        for column in CSV_COLUMNS:
+            row[column] = _csv_value(product.get(column))
+        rows.append(row)
+    return rows
+
+
+def _products_to_csv_bytes(products):
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=CSV_COLUMNS)
+    writer.writeheader()
+    writer.writerows(_csv_rows(products))
+    return buffer.getvalue().encode("utf-8")
+
+
+def _products_to_xlsx_bytes(products):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Products"
+    sheet.append(CSV_COLUMNS)
+
+    for row in _csv_rows(products):
+        sheet.append([row[column] for column in CSV_COLUMNS])
+
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    return buffer.getvalue()
+
+
+def _build_export_file(products, export_format):
+    if export_format == "XLSX":
+        return (
+            _products_to_xlsx_bytes(products),
+            "xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+    return (_products_to_csv_bytes(products), "csv", "text/csv")
+
+
+@st.dialog("Export products")
+def _render_export_dialog(page_products, all_products, page, today):
+    export_format = st.selectbox("Format", ["XLSX", "CSV"], index=0, key="export_format")
+    export_scope = st.selectbox(
+        "Scope",
+        ["Current page", "All products"],
+        index=0,
+        key="export_scope",
+    )
+
+    selected_products = page_products if export_scope == "Current page" else all_products
+    scope_label = f"page_{page + 1}" if export_scope == "Current page" else "all"
+    file_data, ext, mime = _build_export_file(selected_products, export_format)
+
+    st.caption(f"Rows to export: {len(selected_products)}")
+    st.download_button(
+        label="Download",
+        data=file_data,
+        file_name=f"products_{scope_label}_{today}.{ext}",
+        mime=mime,
+        key=f"download_export_{scope_label}_{ext}",
+    )
 
 
 def render_hero():
@@ -16,7 +109,7 @@ def render_hero():
 def render_inputs():
     c1, c2, c3 = st.columns([2, 2, 1.2])
     asin = c1.text_input("ASIN", placeholder="e.g., B08N5WRWNW")
-    geo = c2.text_input("ZIP/Postal Code", placeholder="e.g., US")
+    geo = c2.text_input("ZIP/Postal Code", placeholder="e.g., EU")
     domain = c3.selectbox("Domain", ["com", "ca", "co.uk", "de", "fr", "it", "ae"])
     st.markdown("</div>", unsafe_allow_html=True)
     return asin.strip(), geo.strip(), domain
@@ -81,7 +174,13 @@ def render_products_section(products):
     end_index = min(start_index + items_per_page, len(products))
     st.caption(f"Showing {start_index + 1}-{end_index} of {len(products)} products")
 
-    for product in products[start_index:end_index]:
+    page_products = products[start_index:end_index]
+    today = date.today().isoformat()
+
+    if st.button("Export", key="open_export_dialog"):
+        _render_export_dialog(page_products, products, page, today)
+
+    for product in page_products:
         render_product_card(product)
 
 
