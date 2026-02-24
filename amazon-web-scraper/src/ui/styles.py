@@ -8,21 +8,16 @@ def apply_styles():
           @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Source+Serif+4:wght@500;700&display=swap');
 
           :root {
-            --bg: #091018;
             --surface: #111a24;
             --ink: #e8eef7;
             --muted: #a4b3c5;
             --accent: #14b8a6;
             --accent-soft: #123c3a;
             --border: #223041;
-            --card-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+            --card-shadow: 0 16px 30px rgba(0, 0, 0, 0);
           }
 
           .stApp {
-            background:
-              radial-gradient(circle at 20% 10%, #0d2233 0%, transparent 40%),
-              radial-gradient(circle at 90% 15%, #11292b 0%, transparent 38%),
-              var(--bg);
             color: var(--ink);
             font-family: "Space Grotesk", sans-serif;
           }
@@ -33,7 +28,6 @@ def apply_styles():
           }
 
           .hero {
-            background: linear-gradient(120deg, #0f766e 0%, #164e63 100%);
             color: #ffffff;
             padding: 1.2rem 1.4rem;
             border-radius: 14px;
@@ -52,7 +46,7 @@ def apply_styles():
           }
 
           div[data-testid="stMetric"] {
-            background: #0d1620;
+            background: #000;
             border: 1px solid #233346;
             border-radius: 12px;
             padding: 0.55rem 0.65rem;

@@ -17,6 +17,18 @@ class ProductRepository:
                     data JSONB NOT NULL
                 );
             """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS product_snapshots (
+                    id BIGSERIAL PRIMARY KEY,
+                    asin TEXT NOT NULL,
+                    scraped_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    data JSONB NOT NULL
+                );
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS product_snapshots_asin_scraped_at_idx
+                ON product_snapshots (asin, scraped_at DESC);
+            """)
             conn.commit()
 
     def insert_product(self, product_data):
@@ -38,6 +50,10 @@ class ProductRepository:
                 DO UPDATE SET
                     created_at = EXCLUDED.created_at,
                     data = EXCLUDED.data;
+            """, (asin, created_at, Json(product_data)))
+            cur.execute("""
+                INSERT INTO product_snapshots (asin, scraped_at, data)
+                VALUES (%s, %s, %s);
             """, (asin, created_at, Json(product_data)))
 
             conn.commit()
@@ -90,3 +106,68 @@ class ProductRepository:
             rows = cur.fetchall()
 
         return [row["data"] for row in rows]
+
+    def get_latest_snapshot(self, asin):
+        print('Fetching latest snapshot')
+        with self.db.connection() as conn, conn.cursor() as cur:
+            cur.execute("""
+                SELECT data
+                FROM product_snapshots
+                WHERE asin = %s
+                ORDER BY scraped_at DESC
+                LIMIT 1;
+            """, (asin,))
+            row = cur.fetchone()
+
+        return row["data"] if row else None
+
+    def get_product_snapshots(self, asin, limit=50, offset=0):
+        print('Fetching product snapshots')
+        if limit < 0:
+            raise ValueError("limit must be non-negative")
+        if offset < 0:
+            raise ValueError("offset must be non-negative")
+
+        with self.db.connection() as conn, conn.cursor() as cur:
+            cur.execute("""
+                SELECT data
+                FROM product_snapshots
+                WHERE asin = %s
+                ORDER BY scraped_at DESC
+                LIMIT %s OFFSET %s;
+            """, (asin, limit, offset))
+            rows = cur.fetchall()
+
+        return [row["data"] for row in rows]
+
+    def get_price_history(self, asin, days=30, limit=300):
+        print('Fetching price history')
+        if days <= 0:
+            raise ValueError("days must be greater than 0")
+        if limit <= 0:
+            raise ValueError("limit must be greater than 0")
+
+        with self.db.connection() as conn, conn.cursor() as cur:
+            cur.execute("""
+                SELECT scraped_at, data
+                FROM (
+                    SELECT scraped_at, data
+                    FROM product_snapshots
+                    WHERE asin = %s
+                      AND scraped_at >= NOW() - (%s * INTERVAL '1 day')
+                    ORDER BY scraped_at DESC
+                    LIMIT %s
+                ) snapshots
+                ORDER BY scraped_at ASC;
+            """, (asin, days, limit))
+            rows = cur.fetchall()
+
+        history = []
+        for row in rows:
+            payload = row["data"] or {}
+            history.append({
+                "scraped_at": row["scraped_at"],
+                "price": payload.get("price"),
+                "currency": payload.get("currency"),
+            })
+        return history

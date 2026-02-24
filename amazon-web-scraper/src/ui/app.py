@@ -57,7 +57,7 @@ def initialize():
         st.success("Product scraped successfully.")
 
     products = repo.get_all_products()
-    render_products_section(products)
+    render_products_section(products, repo)
 
     selected_asin = st.session_state.get("analyzing_asin")
     if not selected_asin:

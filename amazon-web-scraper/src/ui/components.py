@@ -1,5 +1,6 @@
 import csv
 import io
+import re
 from datetime import date
 
 import streamlit as st
@@ -123,7 +124,120 @@ def _format_price(product):
     return str(price)
 
 
-def render_product_card(product):
+def _format_money(value, currency=""):
+    if value is None:
+        return "--"
+    if currency:
+        return f"{currency}{value:,.2f}"
+    return f"{value:,.2f}"
+
+
+def _parse_numeric_price(value):
+    if isinstance(value, (int, float)):
+        return float(value)
+    if not isinstance(value, str):
+        return None
+
+    stripped = value.strip()
+    if not stripped:
+        return None
+
+    cleaned = re.sub(r"[^0-9,.-]", "", stripped)
+    if not cleaned:
+        return None
+
+    if "," in cleaned and "." in cleaned:
+        cleaned = cleaned.replace(",", "")
+    elif "," in cleaned and "." not in cleaned:
+        cleaned = cleaned.replace(",", ".")
+
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
+def _build_price_history_series(raw_history):
+    points = []
+    skipped = 0
+    currency = ""
+
+    for item in raw_history:
+        numeric_price = _parse_numeric_price(item.get("price"))
+        if numeric_price is None:
+            skipped += 1
+            continue
+
+        if not currency and item.get("currency"):
+            currency = str(item.get("currency"))
+
+        timestamp = item.get("scraped_at")
+        timestamp_label = (
+            timestamp.strftime("%Y-%m-%d %H:%M")
+            if hasattr(timestamp, "strftime")
+            else str(timestamp)
+        )
+
+        points.append(
+            {
+                "timestamp": timestamp,
+                "timestamp_label": timestamp_label,
+                "price": numeric_price,
+            }
+        )
+
+    return points, currency, skipped
+
+
+def _render_price_history_card(product, repo):
+    asin = product.get("asin")
+    if not asin:
+        st.caption("No ASIN available for price history.")
+        return
+
+    with st.expander("Price history"):
+        days = st.selectbox(
+            "Window (days)",
+            [7, 30, 90],
+            index=1,
+            key=f"history_window_{asin}",
+        )
+
+        raw_history = repo.get_price_history(asin, days=days)
+        points, currency, skipped = _build_price_history_series(raw_history)
+
+        if not points:
+            st.caption("No valid numeric price data in this period.")
+            return
+
+        if skipped > 0:
+            st.caption(f"Ignored {skipped} snapshots with non-numeric prices.")
+
+        st.line_chart(points, x="timestamp_label", y="price")
+
+        latest_price = points[-1]["price"]
+        if len(points) == 1:
+            st.metric("Latest price", _format_money(latest_price, currency))
+            st.caption("Not enough points to determine trend.")
+            return
+
+        first_price = points[0]["price"]
+        delta = latest_price - first_price
+        if delta > 0:
+            trend = "Stigende"
+        elif delta < 0:
+            trend = "Faldende"
+        else:
+            trend = "Uændret"
+
+        st.metric(
+            f"Trend ({days}d)",
+            f"{trend} - {_format_money(latest_price, currency)}",
+            f"{delta:+,.2f}" if not currency else f"{currency}{delta:+,.2f}",
+        )
+
+
+def render_product_card(product, repo):
     with st.container(border=True):
         col_image, col_content = st.columns([1, 2.2])
 
@@ -156,8 +270,10 @@ def render_product_card(product):
             if st.button("Analyze competitors", key=f"analyze_{product['asin']}"):
                 st.session_state["analyzing_asin"] = product["asin"]
 
+            _render_price_history_card(product, repo)
 
-def render_products_section(products):
+
+def render_products_section(products, repo):
     if not products:
         return
 
@@ -181,7 +297,7 @@ def render_products_section(products):
         _render_export_dialog(page_products, products, page, today)
 
     for product in page_products:
-        render_product_card(product)
+        render_product_card(product, repo)
 
 
 def render_competitor_summary(competitors):
