@@ -1,5 +1,5 @@
-from src.ui import run_app
+from src.ui import initialize
 
 
 if __name__ == "__main__":
-    run_app()
+    initialize()

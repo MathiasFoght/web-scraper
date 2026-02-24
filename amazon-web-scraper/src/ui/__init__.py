@@ -1,2 +1,2 @@
-from .app import run_app
+from .app import initialize
 
