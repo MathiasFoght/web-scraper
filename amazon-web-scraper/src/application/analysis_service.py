@@ -44,6 +44,8 @@ class AnalysisService:
         ]
 
     def analyze_competitors(self, asin: str) -> str:
+        print("Analyzing competitors for product")
+
         product = self.repo.get_product(asin)
         competitors = self._format_competitors(asin)
 

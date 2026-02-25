@@ -9,6 +9,8 @@ class ProductService:
         self.client = client
 
     def scrape_and_store_product(self, asin: str, geo_location: str, domain: str) -> ProductData:
+        print("Scraping product")
+
         data = self.client.scrape_product_details(asin, geo_location, domain)
         self.repo.insert_product(data)
         return data

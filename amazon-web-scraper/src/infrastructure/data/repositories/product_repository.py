@@ -40,6 +40,7 @@ class ProductRepository:
             conn.commit()
 
     def insert_product(self, product_data: ProductData) -> str:
+        print("Inserting product")
         asin = product_data.get("asin")
         if not asin:
             raise ValueError("product_data must include 'asin'")
@@ -73,6 +74,7 @@ class ProductRepository:
         return asin
 
     def get_product(self, asin: str) -> ProductData | None:
+        print("Fetching product")
         with self.db.connection() as conn, conn.cursor() as cur:
             cur.execute("SELECT data FROM products WHERE asin = %s LIMIT 1;", (asin,))
             row = cur.fetchone()
@@ -80,6 +82,7 @@ class ProductRepository:
         return row["data"] if row else None
 
     def get_all_products(self) -> list[ProductData]:
+        print("Fetching all products")
         with self.db.connection() as conn, conn.cursor() as cur:
             cur.execute(
                 """
@@ -93,6 +96,7 @@ class ProductRepository:
         return [row["data"] for row in rows]
 
     def search_products(self, search_criteria: dict[str, Any]) -> list[ProductData]:
+        print("Searching products")
         if not search_criteria:
             return []
 
@@ -116,6 +120,9 @@ class ProductRepository:
         return [row["data"] for row in rows]
 
     def get_latest_snapshot(self, asin: str) -> ProductData | None:
+        print("Fetching latest snapshot for product", asin)
+        if not asin:
+            raise ValueError("asin must be provided")
         with self.db.connection() as conn, conn.cursor() as cur:
             cur.execute(
                 """
@@ -137,6 +144,7 @@ class ProductRepository:
         limit: int = 50,
         offset: int = 0,
     ) -> list[ProductData]:
+        print("Fetching snapshots for product", asin)
         if limit < 0:
             raise ValueError("limit must be non-negative")
         if offset < 0:
@@ -163,6 +171,7 @@ class ProductRepository:
         days: int = 30,
         limit: int = 300,
     ) -> list[dict[str, Any]]:
+        print("Fetching price history for product")
         if days <= 0:
             raise ValueError("days must be greater than 0")
         if limit <= 0:

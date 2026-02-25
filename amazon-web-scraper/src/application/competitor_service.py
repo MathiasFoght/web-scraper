@@ -16,6 +16,8 @@ class CompetitorService:
         pages: int = 2,
         progress_callback: ProgressCallback | None = None,
     ) -> list[ProductData]:
+        print("Fetching competitors for product", parent_asin)
+
         parent = self.repo.get_product(parent_asin)
         if not parent:
             return []

@@ -31,6 +31,8 @@ class OxyLabsClient:
         return response.json()
 
     def scrape_product_details(self, asin: str, geo_location: str, domain: str) -> ProductData:
+        print("Scraping product details:")
+
         payload = {
             "source": "amazon_product",
             "query": asin,
@@ -58,6 +60,8 @@ class OxyLabsClient:
         pages: int = 1,
         geo_location: str = "",
     ) -> list[ProductData]:
+        print("Searching competitors for product")
+
         search_title = clean_product_name(query_title)
         results: list[ProductData] = []
         seen_asins: set[str] = set()
@@ -99,6 +103,8 @@ class OxyLabsClient:
         domain: str,
         progress_callback: ProgressCallback | None = None,
     ) -> list[ProductData]:
+        print("Scraping multiple products")
+
         products: list[ProductData] = []
         total = len(asins)
         scraped_count = 0
