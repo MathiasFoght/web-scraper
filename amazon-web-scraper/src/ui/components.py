@@ -1,10 +1,12 @@
 import csv
 import io
-import re
+from collections.abc import Sequence
 from datetime import date
+from typing import Any
 
 import streamlit as st
 from openpyxl import Workbook
+from ..domain.utils import parse_numeric_price
 
 CSV_COLUMNS = [
     "asin",
@@ -18,9 +20,9 @@ CSV_COLUMNS = [
     "url",
     "created_at",
 ]
+ProductData = dict[str, Any]
 
-
-def _csv_value(value):
+def _csv_value(value: Any) -> str | int | float | bool:
     if value is None:
         return ""
     if isinstance(value, (str, int, float, bool)):
@@ -28,8 +30,8 @@ def _csv_value(value):
     return str(value)
 
 
-def _csv_rows(products):
-    rows = []
+def _csv_rows(products: Sequence[ProductData]) -> list[dict[str, str | int | float | bool]]:
+    rows: list[dict[str, str | int | float | bool]] = []
     for product in products:
         row = {}
         for column in CSV_COLUMNS:
@@ -38,7 +40,7 @@ def _csv_rows(products):
     return rows
 
 
-def _products_to_csv_bytes(products):
+def _products_to_csv_bytes(products: Sequence[ProductData]) -> bytes:
     buffer = io.StringIO()
     writer = csv.DictWriter(buffer, fieldnames=CSV_COLUMNS)
     writer.writeheader()
@@ -46,7 +48,7 @@ def _products_to_csv_bytes(products):
     return buffer.getvalue().encode("utf-8")
 
 
-def _products_to_xlsx_bytes(products):
+def _products_to_xlsx_bytes(products: Sequence[ProductData]) -> bytes:
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Products"
@@ -60,7 +62,7 @@ def _products_to_xlsx_bytes(products):
     return buffer.getvalue()
 
 
-def _build_export_file(products, export_format):
+def _build_export_file(products: Sequence[ProductData], export_format: str) -> tuple[bytes, str, str]:
     if export_format == "XLSX":
         return (
             _products_to_xlsx_bytes(products),
@@ -72,7 +74,12 @@ def _build_export_file(products, export_format):
 
 
 @st.dialog("Export products")
-def _render_export_dialog(page_products, all_products, page, today):
+def _render_export_dialog(
+    page_products: Sequence[ProductData],
+    all_products: Sequence[ProductData],
+    page: int,
+    today: str,
+) -> None:
     export_format = st.selectbox("Format", ["XLSX", "CSV"], index=1, key="export_format")
     export_scope = st.selectbox(
         "Scope",
@@ -95,7 +102,7 @@ def _render_export_dialog(page_products, all_products, page, today):
     )
 
 
-def render_hero():
+def render_hero() -> None:
     st.markdown(
         """
         <div class="hero">
@@ -107,7 +114,7 @@ def render_hero():
     )
 
 
-def render_inputs():
+def render_inputs() -> tuple[str, str, str]:
     input_col, _ = st.columns([1, 2.2])
     with input_col:
         asin = st.text_input("ASIN", placeholder="e.g., B08N5WRWNW")
@@ -116,7 +123,7 @@ def render_inputs():
     return asin.strip(), geo.strip(), domain
 
 
-def _format_price(product):
+def _format_price(product: ProductData) -> str:
     price = product.get("price", "--")
     currency = product.get("currency", "")
     if isinstance(price, (int, float)):
@@ -124,7 +131,7 @@ def _format_price(product):
     return str(price)
 
 
-def _format_money(value, currency=""):
+def _format_money(value: float | None, currency: str = "") -> str:
     if value is None:
         return "--"
     if currency:
@@ -132,38 +139,15 @@ def _format_money(value, currency=""):
     return f"{value:,.2f}"
 
 
-def _parse_numeric_price(value):
-    if isinstance(value, (int, float)):
-        return float(value)
-    if not isinstance(value, str):
-        return None
-
-    stripped = value.strip()
-    if not stripped:
-        return None
-
-    cleaned = re.sub(r"[^0-9,.-]", "", stripped)
-    if not cleaned:
-        return None
-
-    if "," in cleaned and "." in cleaned:
-        cleaned = cleaned.replace(",", "")
-    elif "," in cleaned and "." not in cleaned:
-        cleaned = cleaned.replace(",", ".")
-
-    try:
-        return float(cleaned)
-    except ValueError:
-        return None
-
-
-def _build_price_history_series(raw_history):
-    points = []
-    skipped = 0
-    currency = ""
+def _build_price_history_series(
+    raw_history: Sequence[ProductData],
+) -> tuple[list[dict[str, Any]], str, int]:
+    points: list[dict[str, Any]] = []
+    skipped: int = 0
+    currency: str = ""
 
     for item in raw_history:
-        numeric_price = _parse_numeric_price(item.get("price"))
+        numeric_price = parse_numeric_price(item.get("price"))
         if numeric_price is None:
             skipped += 1
             continue
@@ -189,7 +173,7 @@ def _build_price_history_series(raw_history):
     return points, currency, skipped
 
 
-def _render_price_history_card(product, repo):
+def _render_price_history_card(product: ProductData, repo: Any) -> None:
     asin = product.get("asin")
     if not asin:
         st.caption("No ASIN available for price history.")
@@ -237,7 +221,7 @@ def _render_price_history_card(product, repo):
         )
 
 
-def render_product_card(product, repo):
+def render_product_card(product: ProductData, repo: Any) -> None:
     with st.container(border=True):
         col_image, col_content = st.columns([1, 2.2])
 
@@ -273,7 +257,7 @@ def render_product_card(product, repo):
             _render_price_history_card(product, repo)
 
 
-def render_products_section(products, repo):
+def render_products_section(products: Sequence[ProductData], repo: Any) -> None:
     if not products:
         return
 
@@ -300,7 +284,7 @@ def render_products_section(products, repo):
         render_product_card(product, repo)
 
 
-def render_competitor_summary(competitors):
+def render_competitor_summary(competitors: Sequence[ProductData]) -> None:
     if not competitors:
         st.caption("No competitors to show.")
         return

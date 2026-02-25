@@ -1,7 +1,7 @@
 import streamlit as st
 
 
-def apply_styles():
+def apply_styles() -> None:
     st.markdown(
         """
         <style>

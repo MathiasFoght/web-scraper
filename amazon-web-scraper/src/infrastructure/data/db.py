@@ -1,12 +1,15 @@
 import os
-from dotenv import load_dotenv
+from typing import Any
+
 import psycopg
+from dotenv import load_dotenv
 from psycopg.rows import dict_row
 
 load_dotenv()
 
+
 class Database:
-    def __init__(self):
+    def __init__(self) -> None:
         self._dsn = (
             f"host={os.getenv('POSTGRES_HOST')} "
             f"port={os.getenv('POSTGRES_PORT')} "
@@ -15,6 +18,5 @@ class Database:
             f"password={os.getenv('POSTGRES_PASSWORD')}"
         )
 
-    def connection(self):
-        print('Connecting to database...')
+    def connection(self) -> psycopg.Connection[dict[str, Any]]:
         return psycopg.connect(self._dsn, row_factory=dict_row)
